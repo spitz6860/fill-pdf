@@ -35,7 +35,7 @@ exports.generateFdf = function(data, fileName) {
 
   for(var i=0; i<dataKeys.length; i++) {
     var name = dataKeys[i];
-    var value = data[name].toString().replace("\r\n","\r");
+    var value = data[name] ? data[name].toString().replace("\r\n","\r") : '';
 
     body = Buffer.concat([ body, new Buffer("<<\n") ]);
     body = Buffer.concat([ body, new Buffer("/T (") ]);
@@ -55,17 +55,16 @@ exports.generatePdf = function(data, templatePath,callback) {
   var tempName = temp.path({suffix: '.pdf'});
   var tempNameResult = temp.path({suffix: '.pdf'});
 
-  child = spawn("pdftk", ["app/"+templatePath,"fill_form","-","output",tempName,"flatten"]);
+  child = spawn("pdftk", [templatePath,"fill_form","-","output",tempName,"flatten"]);
 
   child.on('exit', function(code) {
     var cmd = "gs -dNOCACHE -sDEVICE=pdfwrite -sOutputFile="+tempNameResult +" -dbatch -dNOPAUSE -dQUIET  " + tempName +"  -c quit"
-    console.log(cmd);
+
     exec(cmd,  function (error, stdout, stderr) {
-      console.log('stderr: ' + stderr);
       if (error !== null) {
         console.log('exec error: ' + error);
       }
-      result = fs.readFileSync(tempNameResult)
+      result = fs.readFileSync(tempNameResult);
 
       // Delete files
       try {
@@ -86,5 +85,4 @@ exports.generatePdf = function(data, templatePath,callback) {
   child.stderr.on('data', function (data) {
     console.log('stderr: ' + data);
   });
-
 }
